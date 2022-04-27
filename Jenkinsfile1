@@ -1,14 +1,14 @@
 pipeline {
   environment {
     imagename = "shreyarajput22/train"
-    registryCredential = 'shreyarajput22'
+    registryCredential = 'shreya-dockerhub'
     dockerImage = ''
   }
   agent any
   stages {
     stage('Cloning Git') {
       steps {
-        git([url: 'https://github.com/Shreya2209R/cicd-pipeline-train-schedule-autodeploy', branch: 'master', credentialsId: 'Shreya2209R'])
+        git([url: 'https://github.com/Shreya2209R/cicd-pipeline-train-schedule-autodeploy', branch: 'master', credentialsId: 'git-creds'])
 
       }
     }
