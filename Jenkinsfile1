@@ -1,34 +1,42 @@
 pipeline {
-  environment {
-    imagename = "shreyarajput22/train"
-    registryCredential = 'shreya-dockerhub'
-    dockerImage = ''
-  }
-  agent any
-  stages {
-    stage('Cloning Git') {
-      steps {
-        git([url: 'https://github.com/Shreya2209R/cicd-pipeline-train-schedule-autodeploy', branch: 'master', credentialsId: 'git-creds'])
-
-      }
-    }
-    stage('Building image') {
-      steps{
-        script {
-          dockerImage = docker.build imagename
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Running build automation!!'
+                sh './gradlew build --no-daemon'
+                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+            }
         }
-      }
+        stage('DeployToDemo') {
+            when {
+                branch 'master'
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'demo_login', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+                    sshPublisher(
+                        failOnError: true,
+                        continueOnError: false,
+                        publishers: [
+                            sshPublisherDesc(
+                                configName: 'demo',
+                                sshCredentials: [
+                                    username: "$USERNAME",
+                                    encryptedPassphrase: "$USERPASS"
+                                ], 
+                                transfers: [
+                                    sshTransfer(
+                                        sourceFiles: 'dist/trainSchedule.zip',
+                                        removePrefix: 'dist/',
+                                        remoteDirectory: '/tmp',
+                                        execCommand: 'sudo /bin/systemctl stop train-schedule && rm -rf /opt/train-schedule/* && unzip /tmp/trainSchedule.zip -d /opt/train-schedule && sudo /bin/systemctl start train-schedule'
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                }
+            }
+       }
     }
-    stage('Deploy Image') {
-      steps{
-        script {
-          docker.withRegistry( '', registryCredential ) {
-            dockerImage.push("$BUILD_NUMBER")
-             dockerImage.push('latest')
-
-          }
-        }
-      }
-    }
-  }
 }
