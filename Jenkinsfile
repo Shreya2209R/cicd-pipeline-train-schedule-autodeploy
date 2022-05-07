@@ -7,7 +7,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS=credentials('shreya-dockerhub')
     }
     stages {
-        stage('Build') {
+        stage('Build1') {
             steps {
                 echo 'Running build automation'
                 sh './gradlew build --no-daemon'
