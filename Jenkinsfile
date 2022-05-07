@@ -2,8 +2,9 @@ pipeline {
     agent any
     environment {
         //be sure to replace "bhavukm" with your own Docker Hub username
-        DOCKER_IMAGE_NAME = "shreyarajput22/train-schedule"
-        docker_hub_login = credentials('shreya-dockerhub')
+        //DOCKER_IMAGE_NAME = "shreyarajput22/train-schedule"
+        //docker_hub_login = credentials('shreya-dockerhub')
+        DOCKERHUB_CREDENTIALS=credentials('shreya-dockerhub')
     }
     stages {
         stage('Build') {
@@ -13,7 +14,7 @@ pipeline {
                 archiveArtifacts artifacts: 'dist/trainSchedule.zip'
             }
         }
-        stage('Build Docker Image') {
+        /*stage('Build Docker Image') {
             when {
                 branch 'master'
             }
@@ -38,7 +39,27 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
+        stage('Build') {
+
+			steps {
+				sh 'docker build -t shreyarajput22/train-schedule:latest .'
+			}
+		}
+        
+        stage('Login') {
+
+			steps {
+				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+			}
+		}
+
+		stage('Push') {
+
+			steps {
+				sh 'docker push shreyarajput22/train-schedule:latest'
+			}
+		}
         stage('CanaryDeploy') {
             when {
                 branch 'master'
